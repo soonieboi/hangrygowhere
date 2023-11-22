@@ -1,0 +1,129 @@
+<!-- feedback.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feedback for Hangry-Go-Where</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap">
+
+  <style>
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background-color: #f4f4f4;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+
+    h1 {
+      text-align: center;
+      color: #007bff;
+    }
+
+    /* Feedback Form */
+    #feedbackForm {
+      max-width: 400px;
+      margin: 20px auto;
+      text-align: left;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 20px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      box-sizing: border-box;
+    }
+
+    /* Center the submit button */
+    .submit-container {
+      text-align: center;
+    }
+
+    button {
+      padding: 10px;
+      margin: 5px;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      color: #fff;
+      background-color: #007bff;
+      border-radius: 5px;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    /* Back to Home Button */
+    .back-btn {
+      display: block;
+      text-align: center;
+      margin: 20px auto;
+      color: #007bff;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .back-btn:hover {
+      text-decoration: underline;
+    }
+
+    /* Navigation bar for consistency */
+    nav {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    nav a {
+      margin: 0 10px;
+      color: #007bff;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    nav a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Feedback for Hangry-Go-Where 🍔</h1>
+
+  <!-- Feedback Form -->
+  <form id="feedbackForm">
+    <label for="name">Name 🧑‍🍳:</label>
+    <input type="text" id="name" name="name" required>
+
+    <label for="contact">Email 📧:</label>
+    <input type="text" id="contact" name="contact" required>
+
+    <label for="feedback">Feedback 📝:</label>
+    <textarea id="feedback" name="feedback" rows="4" required></textarea>
+
+    <!-- Container for the submit button -->
+    <div class="submit-container">
+      <button type="submit">Submit Feedback 🚀</button>
+    </div>
+  </form>
+
+  <!-- Back to Home Button -->
+  <a href="index.html" class="back-btn">Back to Home 🏠</a>
+
+
+</body>
+
+</html>

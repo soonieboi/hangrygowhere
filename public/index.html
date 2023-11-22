@@ -1,0 +1,254 @@
+<!-- public/index.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hangry-Go-Where</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <script src="https://apis.google.com/js/platform.js" async defer></script>
+    <meta name="google-signin-client_id" content="866082060169-f82rfrov35g0fo04ipvjh6642l519hm0.apps.googleusercontent.com">
+
+  
+    <style>
+      body {
+        font-family: 'Montserrat', sans-serif;
+        background-color: #f4f4f4;
+        color: #333;
+        margin: 0;
+        padding: 0;
+        text-align: center; /* Center text in the body */
+      }
+  
+      h1 {
+        color: #007bff; /* Blue color for emphasis */
+      }
+  
+      /* Navigation */
+      nav {
+        background-color: #007bff;
+        padding: 10px;
+        display: flex;
+        justify-content: center;
+        
+      }
+  
+      nav a {
+        color: #fff;
+        text-decoration: none;
+        padding: 10px;
+        margin: 0 10px;
+        font-size: 16px;
+      }
+  
+      nav a:hover {
+        text-decoration: underline;
+      }
+  
+      /* Search and Random Buttons */
+      button {
+        padding: 10px;
+        margin: 5px;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+        color: #fff;
+        background-color: #007bff;
+        border-radius: 5px;
+        transition: background-color 0.3s;
+      }
+  
+      button:hover {
+        background-color: #0056b3; /* Darker blue on hover */
+      }
+  
+      hr {
+        border: 1px solid #ddd;
+        margin: 20px 0;
+      }
+  
+      /* Results Container */
+      #results, #randomResult {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-around;
+      }
+  
+      .place {
+        width: 30%;
+        height: 200px;
+        box-sizing: border-box;
+        padding: 20px;
+        margin: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        background-color: #fff;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s;
+      }
+  
+      .place:hover {
+        transform: scale(1.05);
+      }
+  
+      .rating {
+        color: #f8d828; /* Star color */
+      }
+      /* Adjustments for smaller screens */
+      @media (max-width: 768px) {
+        .place {
+          width: 45%; /* Adjust width for smaller screens */
+        }
+      }
+      
+    </style>
+   
+  </head>
+  
+  <body>
+    <nav>
+      <a href="about.html">About ℹ️</a>
+      <a href="#" onclick="openGoogleSignIn()">Login 🔒</a>
+      <a href="feedback.html">Feedback 📝</a>
+    </nav>
+  
+    <h1>Hangry-Go-Where 🍔</h1>
+    
+  
+    <!-- Random Search Button -->
+    <button id="randomBtn">Random Food Suggestion 🎲</button>
+    <div id="randomResult"></div>
+    <hr> <!-- Line break -->
+  
+    <!-- Search Input, Search Button, and Results -->
+    <input type="text" id="query" placeholder="Enter a food item...">
+    <button id="searchBtn">Search 🔍</button>
+    <button id="exploreBtn">Explore More 🌐</button> <!-- Explore more options button -->
+    <div id="results"></div>
+  
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+  <script>
+    // Function to open Google Sign-In when "Login" link is clicked
+    function openGoogleSignIn() {
+        gapi.auth2.getAuthInstance().signIn();
+      }
+
+    $(document).ready(function () {
+      // Random Search Button Click
+      $('#randomBtn').click(function () {
+        const randomQuery = generateRandomQuery();
+        searchPlaces(randomQuery, true); // Pass true to indicate it's a random search
+      });
+
+      // Search Button Click
+      $('#searchBtn').click(function () {
+        const query = $('#query').val();
+        searchPlaces(query, false); // Pass false to indicate it's a regular search
+      });
+
+      // Explore More Options Button Click
+      $('#exploreBtn').click(function () {
+        const query = $('#query').val();
+        exploreMoreOptions(query);
+      });
+
+      function searchPlaces(query, isRandom) {
+        $.get(`/places?query=${query}`, function (data) {
+          displayResults(data, isRandom);
+        });
+      }
+
+      function exploreMoreOptions(query) {
+        $.get(`/places?query=${query}&limit=100`, function (data) {
+          displayResults(data, false); 
+        });
+      }
+
+      function generateRandomQuery() {
+        // Add logic to generate a random query (e.g., cuisine type, location, etc.)
+        // For simplicity, let's use a predefined list of food-related terms.
+        const foodTerms = [
+            'sushi', 'pizza', 'burgers', 'ramen', 'tacos', 'steak', 'pasta', 'sandwiches',
+            'seafood', 'salad', 'curry', 'dim sum', 'barbecue', 'vegetarian', 'noodles',
+            'desserts', 'smoothies', 'coffee', 'brunch', 'ice cream', 'dessert'
+        ];
+        const randomIndex = Math.floor(Math.random() * foodTerms.length);
+        return foodTerms[randomIndex];
+        
+
+      }
+      function displayResults(places, isRandom) {
+        const resultsDiv = $('#results');
+        const randomResultDiv = $('#randomResult');
+
+        if (isRandom) {
+          randomResultDiv.empty();
+          if (places.length > 0) {
+            const randomPlace = places[0];
+            const placeDiv = $('<div class="place">');
+            placeDiv.append(`<h2>${randomPlace.name}</h2>`);
+            placeDiv.append(`<p>Rating: ${randomPlace.rating || 'N/A'}</p>`);
+            placeDiv.append(`<p>Address: ${randomPlace.formatted_address}</p>`);
+            randomResultDiv.append(placeDiv);
+          } else {
+            randomResultDiv.append('<p>No results found for random search.</p>');
+          }
+        } else {
+          // Clear the existing results
+          resultsDiv.empty();
+
+          // Display only the first 6 results initially
+          const maxResults = 6;
+          const resultsToDisplay = places.slice(0, maxResults);
+
+          resultsToDisplay.forEach(function (place) {
+            const placeDiv = $('<div class="place">');
+            placeDiv.append(`<h2>${place.name}</h2>`);
+            placeDiv.append(`<p>Rating: ${place.rating || 'N/A'}</p>`);
+            placeDiv.append(`<p>Address: ${place.formatted_address}</p>`);
+            resultsDiv.append(placeDiv);
+          });
+
+          // Show the "Explore More Options" button if there are additional results
+          if (places.length > maxResults) {
+            $('#exploreBtn').show();
+          } else {
+            $('#exploreBtn').hide();
+          }
+        }
+      }
+      
+    });
+    // Initialize Google Sign-In
+    function onSignIn(googleUser) {
+      var profile = googleUser.getBasicProfile();
+      console.log('ID: ' + profile.getId());
+      console.log('Name: ' + profile.getName());
+      console.log('Email: ' + profile.getEmail());
+      // Perform any other actions or send user information to the server
+    }
+
+    // Render the Google Sign-In button
+    function renderGoogleSignInButton() {
+      gapi.signin2.render('loginBtn', {
+        'scope': 'profile email',
+        'width': 200,
+        'height': 40,
+        'longtitle': true,
+        'theme': 'dark',
+        'onsuccess': onSignIn,
+      });
+    }
+
+    // Trigger the rendering of the button when the document is ready
+    $(document).ready(function () {
+      renderGoogleSignInButton();
+    });
+
+
+  </script>
+</body>
+
+</html>
