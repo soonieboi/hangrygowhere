@@ -9,8 +9,10 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
     <script src="https://apis.google.com/js/platform.js" async defer></script>
-    <meta name="google-signin-client_id" content="866082060169-f82rfrov35g0fo04ipvjh6642l519hm0.apps.googleusercontent.com">
-
+    
+    <link rel='stylesheet' href='https://api.mapbox.com/mapbox-gl-js/v2.8.1/mapbox-gl.css' />
+    <link rel='stylesheet' href='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.0/mapbox-gl-geocoder.css' />
+    
   
     <style>
       body {
@@ -41,6 +43,7 @@
         padding: 10px;
         margin: 0 10px;
         font-size: 16px;
+        font-weight: bold
       }
   
       nav a:hover {
@@ -102,12 +105,17 @@
           width: 45%; /* Adjust width for smaller screens */
         }
       }
+      #map {
+        height: 400px;
+      }
+
       
     </style>
    
   </head>
   
   <body>
+    
     <nav>
       <a href="about.html">About ℹ️</a>
       <a href="#" onclick="openGoogleSignIn()">Login 🔒</a>
@@ -127,15 +135,58 @@
     <button id="searchBtn">Search 🔍</button>
     <button id="exploreBtn">Explore More 🌐</button> <!-- Explore more options button -->
     <div id="results"></div>
+
+    <hr>
   
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-  <script>
-    // Function to open Google Sign-In when "Login" link is clicked
-    function openGoogleSignIn() {
-        gapi.auth2.getAuthInstance().signIn();
-      }
+  
+    <script src='https://api.mapbox.com/mapbox-gl-js/v2.8.1/mapbox-gl.js'></script>
+    <p>🚧 Map under construction 🚧</p>
+    <div id="map"></div>
+    <script src='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.0/mapbox-gl-geocoder.min.js'></script>
 
+    
+    <script>
     $(document).ready(function () {
+      mapboxgl.accessToken = 'pk.eyJ1Ijoic2hlcm1pbiIsImEiOiJjbHAxZWg0ZGMwZXgxMnBxdWU0eWxvNzV2In0.4PzeCZSg-z9nprPITT2nwg';
+
+    function initMap() {
+      var map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/streets-v11',
+        center: [103.8198, 1.3521],
+        zoom: 11.5
+      });
+      // Pass the mapboxgl object to the MapboxGeocoder constructor
+      var geocoder = new MapboxGeocoder({
+        accessToken: mapboxgl.accessToken,
+        mapboxgl: mapboxgl, // Pass the mapboxgl object here
+        marker: {
+          color: 'red'
+        },
+        placeholder: 'Enter address'
+      });
+
+      
+
+      // Add the Mapbox Geocoding control directly
+      map.addControl(geocoder);
+
+      // Listen for the 'result' event when the user selects an address
+      map.on('geocoder.result', function (event) {
+        // Get the coordinates from the result
+        var coordinates = event.result.center;
+
+        // Add a marker to the map using the coordinates
+        new mapboxgl.Marker()
+          .setLngLat(coordinates)
+          .addTo(map);
+      });
+    }
+
+    initMap();
+
+
       // Random Search Button Click
       $('#randomBtn').click(function () {
         const randomQuery = generateRandomQuery();
@@ -157,7 +208,33 @@
       function searchPlaces(query, isRandom) {
         $.get(`/places?query=${query}`, function (data) {
           displayResults(data, isRandom);
+          if(isRandom && data.length > 0){
+            geocodeRandomPlace(data[0]);
+          }
         });
+      }
+
+      function geocodeRandomPlace(place) {
+        // Manually trigger geocoding for the randomly generated place
+        mapboxgl.accessToken = 'pk.eyJ1Ijoic2hlcm1pbiIsImEiOiJjbHAxZWg0ZGMwZXgxMnBxdWU0eWxvNzV2In0.4PzeCZSg-z9nprPITT2nwg'; // Make sure to replace with your actual access token
+        var geocoder = new MapboxGeocoder({
+          accessToken: mapboxgl.accessToken,
+          mapboxgl: mapboxgl,
+          marker: {
+            color: 'orange'
+          },
+          placeholder: 'Enter address'
+        });
+
+        geocoder.on('load', function(){
+          geocoder.setInput(place.formatted_address);
+
+        });
+
+        geocoder.query(place.formatted_address, function (results){
+          console.log(results);
+        });
+
       }
 
       function exploreMoreOptions(query) {
@@ -221,34 +298,7 @@
       }
       
     });
-    // Initialize Google Sign-In
-    function onSignIn(googleUser) {
-      var profile = googleUser.getBasicProfile();
-      console.log('ID: ' + profile.getId());
-      console.log('Name: ' + profile.getName());
-      console.log('Email: ' + profile.getEmail());
-      // Perform any other actions or send user information to the server
-    }
-
-    // Render the Google Sign-In button
-    function renderGoogleSignInButton() {
-      gapi.signin2.render('loginBtn', {
-        'scope': 'profile email',
-        'width': 200,
-        'height': 40,
-        'longtitle': true,
-        'theme': 'dark',
-        'onsuccess': onSignIn,
-      });
-    }
-
-    // Trigger the rendering of the button when the document is ready
-    $(document).ready(function () {
-      renderGoogleSignInButton();
-    });
-
-
+   
   </script>
 </body>
-
 </html>
