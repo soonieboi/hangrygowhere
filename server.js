@@ -7,9 +7,22 @@ const axios = require('axios');
 const app = express();
 const port = process.env.PORT || 3000;
 const apiKey = 'AIzaSyDOTut4xJhVq96mT9yoWL1jQ-Oy2gkfNDo';
-// Connect to MongoDB (replace 'your_mongodb_uri' with your actual MongoDB URI)
-mongoose.connect('mongodb+srv://sherminh0512:Soonieboi%402019@hangrydb.lxf679w.mongodb.net/hangrydb');
+// Connect to MongoDB
+mongoose.set('strictQuery', false);
+mongoose.connect('mongodb+srv://sherminh0512:Soonieboi%402019@hangrydb.lxf679w.mongodb.net/hangrydb', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
 
+const db = mongoose.connection;
+
+db.on('error', (err) => {
+  console.error('MongoDB connection error:', err);
+});
+
+db.once('open', () => {
+  console.log('Connected to MongoDB');
+});
 
 // Create a Mongoose schema and model
 const feedbackSchema = new mongoose.Schema({
