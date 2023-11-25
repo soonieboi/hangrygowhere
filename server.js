@@ -12,8 +12,7 @@ mongoose.set('strictQuery', false);
 mongoose.connect('mongodb+srv://sherminh0512:Soonieboi%402019@hangrydb.lxf679w.mongodb.net/hangrydb', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-  bufferCommands: false, // Set to true by default, can be set to false
-  bufferMaxEntries: 0,   // Set to 0 for unlimited buffering
+  
 });
 
 const db = mongoose.connection;
