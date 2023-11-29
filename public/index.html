@@ -1,5 +1,3 @@
-<!-- public/index.html -->
-
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -8,12 +6,8 @@
     <title>Hangry-Go-Where</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
-    <script src="https://apis.google.com/js/platform.js" async defer></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDOTut4xJhVq96mT9yoWL1jQ-Oy2gkfNDo&libraries=places"></script>
     
-    <link rel='stylesheet' href='https://api.mapbox.com/mapbox-gl-js/v2.8.1/mapbox-gl.css' />
-    <link rel='stylesheet' href='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.0/mapbox-gl-geocoder.css' />
-    
-  
     <style>
       body {
         font-family: 'Montserrat', sans-serif;
@@ -34,7 +28,6 @@
         padding: 10px;
         display: flex;
         justify-content: center;
-        
       }
   
       nav a {
@@ -43,7 +36,7 @@
         padding: 10px;
         margin: 0 10px;
         font-size: 16px;
-        font-weight: bold
+        font-weight: bold;
       }
   
       nav a:hover {
@@ -59,7 +52,7 @@
         font-size: 16px;
         color: #fff;
         background-color: #007bff;
-        border-radius: 5px;
+        border-radius: 100px;
         transition: background-color 0.3s;
       }
   
@@ -109,25 +102,30 @@
         height: 400px;
       }
 
-      
+      #directionsPanel {
+        width: 60%; /* Adjust the width as needed */
+        margin: 20px auto;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        background-color: #fff;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }     
+
+
     </style>
-   
   </head>
   
   <body>
-    
+    <h1>Hangry-Go-Where 🍔</h1>
     <nav>
       <a href="about.html">About ℹ️</a>
-      <a href="#" onclick="openGoogleSignIn()">Login 🔒</a>
       <a href="feedback.html">Feedback 📝</a>
     </nav>
   
-    <h1>Hangry-Go-Where 🍔</h1>
-    
-  
     <!-- Random Search Button -->
     <p><strong>🌯 Roll for a Food Suggestion! 🍱</strong></p>
-    <button id="randomBtn">Random Food Suggestion 🎲</button>
+    <button id="randomBtn">Hit me 🎲</button>
     <div id="randomResult"></div>
     <hr> <!-- Line break -->
   
@@ -137,170 +135,209 @@
     <button id="searchBtn">Search 🔍</button>
     <button id="exploreBtn">Explore More 🌐</button> <!-- Explore more options button -->
     <div id="results"></div>
-
+  
     <hr>
   
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-  
-    <script src='https://api.mapbox.com/mapbox-gl-js/v2.8.1/mapbox-gl.js'></script>
-    <p><strong>🚧 🚧 🚧 🚧 Map under construction 🚧 🚧 🚧 🚧</strong></p>
+    <p><strong>🧭 Getting there 🧭</strong></p>
+    <button id="directionsBtn">Get Directions 🚗</button>
     <div id="map"></div>
-    <script src='https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-geocoder/v4.7.0/mapbox-gl-geocoder.min.js'></script>
-
+    <div id="directionsPanel"></div>
+  
     
     <script>
-    $(document).ready(function () {
-      mapboxgl.accessToken = 'pk.eyJ1Ijoic2hlcm1pbiIsImEiOiJjbHAxZWg0ZGMwZXgxMnBxdWU0eWxvNzV2In0.4PzeCZSg-z9nprPITT2nwg';
-
-    function initMap() {
-      var map = new mapboxgl.Map({
-        container: 'map',
-        style: 'mapbox://styles/mapbox/streets-v11',
-        center: [103.8198, 1.3521],
-        zoom: 11.5
-      });
-      // Pass the mapboxgl object to the MapboxGeocoder constructor
-      var geocoder = new MapboxGeocoder({
-        accessToken: mapboxgl.accessToken,
-        mapboxgl: mapboxgl, // Pass the mapboxgl object here
-        marker: {
-          color: 'red'
-        },
-        placeholder: 'Enter address'
-      });
-
-      
-
-      // Add the Mapbox Geocoding control directly
-      map.addControl(geocoder);
-
-      // Listen for the 'result' event when the user selects an address
-      map.on('geocoder.result', function (event) {
-        // Get the coordinates from the result
-        var coordinates = event.result.center;
-
-        // Add a marker to the map using the coordinates
-        new mapboxgl.Marker()
-          .setLngLat(coordinates)
-          .addTo(map);
-      });
-    }
-
-    initMap();
-
-
-      // Random Search Button Click
-      $('#randomBtn').click(function () {
-        const randomQuery = generateRandomQuery();
-        searchPlaces(randomQuery, true); // Pass true to indicate it's a random search
-      });
-
-      // Search Button Click
-      $('#searchBtn').click(function () {
-        const query = $('#query').val();
-        searchPlaces(query, false); // Pass false to indicate it's a regular search
-      });
-
-      // Explore More Options Button Click
-      $('#exploreBtn').click(function () {
-        const query = $('#query').val();
-        exploreMoreOptions(query);
-      });
-
-      function searchPlaces(query, isRandom) {
-        $.get(`/places?query=${query}`, function (data) {
-          displayResults(data, isRandom);
-          if(isRandom && data.length > 0){
-            geocodeRandomPlace(data[0]);
+      $(document).ready(function () {
+        var map;
+        var infoWindow = new google.maps.InfoWindow();
+        var directionsService = new google.maps.DirectionsService();
+        var directionsRenderer = new google.maps.DirectionsRenderer();
+        var directionsPanel = document.getElementById('directionsPanel');
+    
+        function initMap() {
+          map = new google.maps.Map(document.getElementById('map'), {
+            center: { lat: 1.3521, lng: 103.8198 },
+            zoom: 11.5
+          });
+    
+          directionsRenderer.setMap(map);
+          directionsRenderer.setPanel(directionsPanel);
+        }
+    
+        initMap();
+    
+        // Random Search Button Click
+        $('#randomBtn').click(function () {
+          const randomQuery = generateRandomQuery();
+          searchPlaces(randomQuery, true); // Pass true to indicate it's a random search
+        });
+    
+        // Search Button Click
+        $('#searchBtn').click(function () {
+          const query = $('#query').val();
+          searchPlaces(query, false); // Pass false to indicate it's a regular search
+        });
+    
+        // Explore More Options Button Click
+        $('#exploreBtn').click(function () {
+          const query = $('#query').val();
+          exploreMoreOptions(query);
+        });
+    
+        // Directions Button Click
+        $('#directionsBtn').click(function () {
+          // Check if an info window is open
+          if (infoWindow.marker) {
+            // Use the Geolocation API to get the user's current position
+            if (navigator.geolocation) {
+              navigator.geolocation.getCurrentPosition(
+                function (position) {
+                  const origin = new google.maps.LatLng(
+                    position.coords.latitude,
+                    position.coords.longitude
+                  );
+                  const destination = infoWindow.marker.getPosition();
+                  calculateDirections(origin, destination);
+                },
+                function (error) {
+                  console.error('Error getting user location:', error);
+                }
+              );
+            } else {
+              console.error('Geolocation is not supported by this browser.');
+            }
+          } else {
+            alert('Please click on a marker to set the destination.');
           }
         });
-      }
-
-      function geocodeRandomPlace(place) {
-        // Manually trigger geocoding for the randomly generated place
-        mapboxgl.accessToken = 'pk.eyJ1Ijoic2hlcm1pbiIsImEiOiJjbHAxZWg0ZGMwZXgxMnBxdWU0eWxvNzV2In0.4PzeCZSg-z9nprPITT2nwg'; // Make sure to replace with your actual access token
-        var geocoder = new MapboxGeocoder({
-          accessToken: mapboxgl.accessToken,
-          mapboxgl: mapboxgl,
-          marker: {
-            color: 'orange'
-          },
-          placeholder: 'Enter address'
-        });
-
-        geocoder.on('load', function(){
-          geocoder.setInput(place.formatted_address);
-
-        });
-
-        geocoder.query(place.formatted_address, function (results){
-          console.log(results);
-        });
-
-      }
-
-      function exploreMoreOptions(query) {
-        $.get(`/places?query=${query}&limit=100`, function (data) {
-          displayResults(data, false); 
-        });
-      }
-
-      function generateRandomQuery() {
-        // Add logic to generate a random query (e.g., cuisine type, location, etc.)
-        // For simplicity, let's use a predefined list of food-related terms.
-        const foodTerms = [
+    
+        function calculateDirections(origin, destination) {
+          const request = {
+            origin: origin,
+            destination: destination,
+            travelMode: 'DRIVING'
+          };
+    
+          directionsService.route(request, function (result, status) {
+            if (status == 'OK') {
+              directionsRenderer.setDirections(result);
+    
+              // Optionally, you can zoom and center the map based on the directions result
+              const bounds = result.routes[0].bounds;
+              map.fitBounds(bounds);
+            } else {
+              alert('Directions request failed due to ' + status);
+            }
+          });
+        }
+    
+        function searchPlaces(query, isRandom) {
+          $.get(`/places?query=${query}`, function (data) {
+            displayResults(data, isRandom);
+            if (isRandom && data.length > 0) {
+              geocodeRandomPlace(data[0]);
+            }
+          });
+        }
+    
+        function geocodeRandomPlace(place) {
+          // Manually trigger geocoding for the randomly generated place
+          var geocoder = new google.maps.Geocoder();
+          geocoder.geocode({ 'address': place.formatted_address }, function (results, status) {
+            if (status == 'OK' && results[0].geometry) {
+              var coordinates = results[0].geometry.location;
+              addMarkerToMap(coordinates, place.formatted_address);
+            } else {
+              console.error('Geocoding failed for the random address:', place.formatted_address);
+              alert('Geocoding failed. Please try again.');
+            }
+          });
+        }
+    
+        function addMarkerToMap(coordinates, address) {
+          // Add a marker to the map using the coordinates
+          var marker = new google.maps.Marker({
+            position: coordinates,
+            map: map,
+            title: address
+          });
+    
+          // Add click event listener to the marker
+          marker.addListener('click', function () {
+            infoWindow.marker = marker;
+            infoWindow.setContent(`<strong>${address}</strong><br><button id="setDestinationBtn">Set Destination 🚗</button>`);
+            infoWindow.open(map, marker);
+    
+            // Add click event listener to the "Set Destination" button in the info window
+            $('#setDestinationBtn').click(function () {
+              // Close the info window and trigger directions calculation
+              infoWindow.close();
+              calculateDirections(marker.getPosition());
+            });
+          });
+        }
+    
+        function exploreMoreOptions(query) {
+          $.get(`/places?query=${query}&limit=100`, function (data) {
+            displayResults(data, false);
+          });
+        }
+    
+        function generateRandomQuery() {
+          const foodTerms = [
             'sushi', 'pizza', 'burgers', 'ramen', 'tacos', 'steak', 'pasta', 'sandwiches',
             'seafood', 'salad', 'curry', 'dim sum', 'barbecue', 'vegetarian', 'noodles',
             'desserts', 'smoothies', 'coffee', 'brunch', 'ice cream', 'dessert'
-        ];
-        const randomIndex = Math.floor(Math.random() * foodTerms.length);
-        return foodTerms[randomIndex];
-        
-
-      }
-      function displayResults(places, isRandom) {
-        const resultsDiv = $('#results');
-        const randomResultDiv = $('#randomResult');
-
-        if (isRandom) {
-          randomResultDiv.empty();
-          if (places.length > 0) {
-            const randomPlace = places[0];
-            const placeDiv = $('<div class="place">');
-            placeDiv.append(`<h2>${randomPlace.name}</h2>`);
-            placeDiv.append(`<p>Rating: ${randomPlace.rating || 'N/A'}</p>`);
-            placeDiv.append(`<p>Address: ${randomPlace.formatted_address}</p>`);
-            randomResultDiv.append(placeDiv);
+          ];
+          const randomIndex = Math.floor(Math.random() * foodTerms.length);
+          return foodTerms[randomIndex];
+        }
+    
+        function displayResults(places, isRandom) {
+          const resultsDiv = $('#results');
+          const randomResultDiv = $('#randomResult');
+    
+          if (isRandom) {
+            randomResultDiv.empty();
+            if (places.length > 0) {
+              const randomPlace = places[0];
+              const placeDiv = $('<div class="place">');
+              placeDiv.append(`<h2>${randomPlace.name}</h2>`);
+              placeDiv.append(`<p>Rating: ${randomPlace.rating || 'N/A'}</p>`);
+              placeDiv.append(`<p>Address: ${randomPlace.formatted_address}</p>`);
+              randomResultDiv.append(placeDiv);
+              // Add marker to the map
+              geocodeRandomPlace(randomPlace);
+            } else {
+              randomResultDiv.append('<p>No results found for random search.</p>');
+            }
           } else {
-            randomResultDiv.append('<p>No results found for random search.</p>');
-          }
-        } else {
-          // Clear the existing results
-          resultsDiv.empty();
-
-          // Display only the first 6 results initially
-          const maxResults = 6;
-          const resultsToDisplay = places.slice(0, maxResults);
-
-          resultsToDisplay.forEach(function (place) {
-            const placeDiv = $('<div class="place">');
-            placeDiv.append(`<h2>${place.name}</h2>`);
-            placeDiv.append(`<p>Rating: ${place.rating || 'N/A'}</p>`);
-            placeDiv.append(`<p>Address: ${place.formatted_address}</p>`);
-            resultsDiv.append(placeDiv);
-          });
-
-          // Show the "Explore More Options" button if there are additional results
-          if (places.length > maxResults) {
-            $('#exploreBtn').show();
-          } else {
-            $('#exploreBtn').hide();
+            // Clear the existing results
+            resultsDiv.empty();
+    
+            // Display only the first 6 results initially
+            const maxResults = 6;
+            const resultsToDisplay = places.slice(0, maxResults);
+    
+            resultsToDisplay.forEach(function (place) {
+              const placeDiv = $('<div class="place">');
+              placeDiv.append(`<h2>${place.name}</h2>`);
+              placeDiv.append(`<p>Rating: ${place.rating || 'N/A'}</p>`);
+              placeDiv.append(`<p>Address: ${place.formatted_address}</p>`);
+              resultsDiv.append(placeDiv);
+            });
+    
+            // Show the "Explore More Options" button if there are additional results
+            if (places.length > maxResults) {
+              $('#exploreBtn').show();
+            } else {
+              $('#exploreBtn').hide();
+            }
           }
         }
-      }
-      
-    });
-   
-  </script>
-</body>
+      });
+    </script>
+    
+    
+    
+  </body>
 </html>
